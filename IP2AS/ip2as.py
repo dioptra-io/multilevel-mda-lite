@@ -13,7 +13,7 @@ def ripe_ip2as(g):
     for v in g.vertices():
         result = requests.get(ripe_ip2as_url+ ip_address[v])
         as_infos = result.json()["data"]
-        if as_infos.has_key("asns"):
+        if "asns" in as_infos:
             asns = as_infos["asns"]
             ripe_asns[v] = asns
             if len(asns) > 0:

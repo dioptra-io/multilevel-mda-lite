@@ -1,6 +1,6 @@
 from graph_tool.all import *
-from Operations import *
-from Visualization import *
+from Graph.Operations import *
+from Graph.Visualization import *
 
 
 # This function gives the max probes needed to statistically reach nk's in case
@@ -8,7 +8,7 @@ from Visualization import *
 # d is the diamond
 def max_probes_needed_ttl(g, lb, hop, nks):
     probabilities_to_reach = {}
-    for ttl, nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+    for ttl, nint in sorted(lb.get_ttl_vertices_number().items()):
         # First is the ttl with 1 interface, so skip it
         vertices_ttl = find_vertex_by_ttl(g, ttl)
         if ttl == min(lb.get_ttl_vertices_number().keys()):

@@ -1,10 +1,11 @@
 #config.Conf.load_layers.remove("x509")
 import time
 import copy
+import functools
 from Alias.Mpls import *
 from Graph.Operations import *
 from Network.Packets.Utils import *
-from Algorithm.Utils import send_probes
+from Algorithm.Utils import send_probes, cmp_to_key
 from Algorithm.Utils import get_total_probe_sent, get_total_replies, vertices_dict_to_int_dict, int_dict_to_vertices_dict
 
 midar_unusable_treshold = 0.75
@@ -95,7 +96,7 @@ def find_alias_candidates(g, ttl):
 
 
 def get_deducable_alias_rec(v1, aliases, v1_aliases):
-    for v, v_aliases in sorted(aliases.iteritems()):
+    for v, v_aliases in sorted(aliases.items()):
         if v == v1:
             v1_aliases.add(v)
             v1_aliases = v1_aliases.union(v_aliases)
@@ -104,10 +105,10 @@ def get_deducable_alias_rec(v1, aliases, v1_aliases):
     return v1_aliases
 def get_deducable_alias(v1, aliases):
     v1_aliases = set()
-    if aliases.has_key(v1):
+    if v1 in aliases:
         v1_aliases = get_deducable_alias_rec(v1, aliases, v1_aliases)
     else:
-        for v, v_aliases in sorted(aliases.iteritems()):
+        for v, v_aliases in sorted(aliases.items()):
             has_found_alias = False
             for v_alias in v_aliases:
                 if v_alias == v1:
@@ -125,7 +126,7 @@ def is_deducable_alias(v1, v2, aliases):
 
     min_v1_alias = None
     for v1_alias in sorted(v1_aliases):
-        if aliases.has_key(v1_alias):
+        if v1_alias in aliases:
             min_v1_alias = v1_alias
             break
     return v2 in v1_aliases, min_v1_alias
@@ -166,7 +167,7 @@ def send_parallel_alias_probes(g, l_l_vertices, ttl, destination):
                 #logging.debug("Flow changed during measurement! Or it is may be not a per-flow load-balancer...")
                 update_graph(g, reply_ip, ttl_probe, ttl_reply, flow_id, alias_result, mpls_infos)
                 other_v = find_vertex_by_ip(g, reply_ip)
-                if not time_series_by_vertices.has_key(other_v):
+                if not other_v in time_series_by_vertices:
                     time_series_by_vertices[other_v] = [[before, reply.time, ip_id_reply, ip_id_probe]]
                 else:
                     time_series_by_vertices[other_v].append([before, reply.time, ip_id_reply, ip_id_probe])
@@ -300,7 +301,7 @@ def monotonic_bound_test(time_serie1, original_time_serie2):
 
     time_serie.extend(time_serie2)
     # Sort by ip_id
-    time_serie.sort(mbt_sort)
+    time_serie.sort(key=functools.cmp_to_key(mbt_sort))
     # # Sort by before time (stable, guaranteed by python)
     # time_serie.sort(key=lambda x : x[0])
 
@@ -316,7 +317,7 @@ def apply_mbt_fingerprinting_ttl(g, time_serie_by_v):
     ip_address = g.vertex_properties["ip_address"]
     mpls = g.vertex_properties["mpls"]
     candidates = []
-    for v, time_serie in time_serie_by_v.iteritems():
+    for v, time_serie in time_serie_by_v.items():
         # This does filter on ip id series that are not usable... That sould be renamed.
         velocity = compute_velocity_and_filter(time_serie, len(time_serie))
         if velocity is not None:
@@ -329,17 +330,17 @@ def apply_mbt_fingerprinting_ttl(g, time_serie_by_v):
     # TODO This should be an option as it is an optimization
     alias_candidates = filter_candidates(candidates)
 
-    for v, time_serie in time_serie_by_v.iteritems():
+    for v, time_serie in time_serie_by_v.items():
         # VERY IMPORTANT. THIS ENSURES THE CORRECTNESS OF MBT
-        time_serie.sort(mbt_sort)
+        time_serie.sort(key=functools.cmp_to_key(mbt_sort))
         compute_negative_delta(time_serie)
 
     next_stage_candidates = {}
     full_alias_candidates = {}
     for v1, v2 in alias_candidates:
-        if not full_alias_candidates.has_key(v1):
+        if not v1 in full_alias_candidates:
             full_alias_candidates[v1] = set()
-        if not full_alias_candidates.has_key(v2):
+        if not v2 in full_alias_candidates:
             full_alias_candidates[v2] = set()
     for v1, v2 in alias_candidates:
         #print "Estimation stage : Applying MBT to candidates " + ip_address[v1] + " and " + ip_address[v2]
@@ -375,14 +376,14 @@ def pre_estimation_stage(g, time_serie_by_v):
 
 def remove_candidates(elimination_stage_candidates, candidate, ip_address):
     new_key = None
-    if elimination_stage_candidates.has_key(candidate):
+    if candidate in elimination_stage_candidates:
         new_key = list(elimination_stage_candidates[candidate])[0]
         elimination_stage_candidates[new_key] = elimination_stage_candidates[candidate]
         elimination_stage_candidates[new_key].discard(new_key)
         elimination_stage_candidates.pop(candidate, None)
         logging.debug("Elimination of candidate : " + str(ip_address[candidate]))
     else:
-        for key_candidate, value_candidates in elimination_stage_candidates.iteritems():
+        for key_candidate, value_candidates in elimination_stage_candidates.items():
             if candidate in value_candidates:
                 value_candidates.remove(candidate)
                 logging.debug("Elimination of candidate : " + str(ip_address[candidate]))
@@ -395,12 +396,12 @@ def remove_candidates(elimination_stage_candidates, candidate, ip_address):
 
 def rebuild_subgroups(full_alias_candidates, ip_address):
     subgroups = {}
-    for v, v_potential_aliases in full_alias_candidates.iteritems():
+    for v, v_potential_aliases in full_alias_candidates.items():
         has_found_a_subgroup = False
         if len(v_potential_aliases) == 0:
             logging.debug("Elimination of candidate : " + str(ip_address[v]))
             continue
-        for key_g, subgroup in subgroups.iteritems():
+        for key_g, subgroup in subgroups.items():
             is_transitivity_subgroup = False
             if v in subgroup:
                 is_transitivity_subgroup = True
@@ -437,7 +438,7 @@ def elimination_stage(g, elimination_stage_candidates, full_alias_candidates, tt
             logging.debug(str(k) + " on " + str(nb_round-1) + " rounds of elimination stage...")
             logging.debug(str(len(elimination_stage_candidates)) + " subgroups of ips to test for elimination stage")
             l_l_subgraphs = []
-            for elimination_candidate, set_candidates in elimination_stage_candidates.iteritems():
+            for elimination_candidate, set_candidates in elimination_stage_candidates.items():
 
                 candidates = list(set_candidates)
                 candidates.sort()
@@ -454,9 +455,9 @@ def elimination_stage(g, elimination_stage_candidates, full_alias_candidates, tt
 
 
             candidates_to_remove_treshold = []
-            for v, time_serie in time_series_by_candidate.iteritems():
+            for v, time_serie in time_series_by_candidate.items():
                 # VERY IMPORTANT
-                time_serie.sort(mbt_sort)
+                time_serie.sort(key=functools.cmp_to_key(mbt_sort))
                 compute_negative_delta(time_serie)
                 ip_ids = [x[2] for x in time_serie]
                 ip_ids_probes = [x[3] for x in time_serie]
@@ -523,18 +524,18 @@ def elimination_stage(g, elimination_stage_candidates, full_alias_candidates, tt
             int_results_per_round[k] = (vertices_dict_to_int_dict(elimination_stage_candidates),
                                     probes_sent_after_round - probes_sent_before_round,
                                     replies_received_after_round - replies_received_before_round)
-        for round, elimination_stage_candidates_per_round in results_per_round.iteritems():
-            for elimination_candidate, candidates in elimination_stage_candidates_per_round.iteritems():
+        for round, elimination_stage_candidates_per_round in results_per_round.items():
+            for elimination_candidate, candidates in elimination_stage_candidates_per_round.items():
                 candidates.discard(elimination_candidate)
                 for candidate in candidates:
                     if candidate != elimination_candidate:
                         logging.debug(ip_address[elimination_candidate] + " and " + ip_address[
                             candidate] + " passed the round "+ str(round) + " of elimination stage!")
 
-        for round, (elimination_stage_candidates_per_round, probes_sent, replies_received) in int_results_per_round.iteritems():
-            for elimination_candidate, candidates in elimination_stage_candidates_per_round.iteritems():
+        for round, (elimination_stage_candidates_per_round, probes_sent, replies_received) in int_results_per_round.items():
+            for elimination_candidate, candidates in elimination_stage_candidates_per_round.items():
                 candidates.discard(elimination_candidate)
-        # for elimination_candidate, candidates in elimination_stage_candidates.iteritems():
+        # for elimination_candidate, candidates in elimination_stage_candidates.items():
         #     candidates.discard(elimination_candidate)
         #     for candidate in candidates :
         #         if candidate != elimination_candidate:
@@ -553,7 +554,7 @@ def remove_self_loop_destination(g, destination):
 
 def router_graph(aliases, g):
     vertices_to_be_removed = set()
-    for v1, v1_aliases in aliases.iteritems():
+    for v1, v1_aliases in aliases.items():
         for v1_alias in v1_aliases:
             if v1 != v1_alias:
                 merge_vertices(g, v1, v1_alias)
@@ -566,7 +567,7 @@ def router_graph(aliases, g):
 def save_routers_round(round, aliases, probes_sent, replies_received, r_g):
     ip_address = r_g.vertex_properties["ip_address"]
     routers = []
-    for v1, v1_aliases in aliases.iteritems():
+    for v1, v1_aliases in aliases.items():
         router = set()
         router.add(ip_address[v1])
         for v1_alias in v1_aliases:
@@ -581,7 +582,7 @@ def save_routers_round(round, aliases, probes_sent, replies_received, r_g):
 def save_routers(aliases, r_g):
     ip_address = r_g.vertex_properties["ip_address"]
     routers = []
-    for v1, v1_aliases in aliases.iteritems():
+    for v1, v1_aliases in aliases.items():
         router = set()
         router.add(ip_address[v1])
         for v1_alias in v1_aliases:

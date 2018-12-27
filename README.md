@@ -16,6 +16,17 @@ To craft, send and parse packets, it uses scapy:
 sudo pip install scapy
 ```
 
+If you are on OSX, scapy does not work natively and you must install libdnet and its python wrapper. It works for python2+.
+
+For python3+, libdnet has no python wrapper at the moment, so we recommend you using kamene, which is a fork of scapy supporting
+python3+.
+
+We will remove the dependency to kamene as soon as libdnet has a wrapper for python3 working with scapy.
+```
+sudo pip install kamene
+```
+
+
 To provide a rich graph view, and to compute the IP and router level graphs, MMLPT uses graph-tool, which is a boost C++ library with a python wrapper.   
 
 Follow the instructions in the following link to install graph-tool. As the C++ Library makes an extensive use of metaprogramming and templates, it can take a while (up to 30 minutes on a recent laptop) to compile graph-tool: 

@@ -68,7 +68,7 @@ def find_vertex_by_ttl(g, ttl):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     vertices_ttl = []
     for v in g.vertices():
-        for hop, flow_ids in ttls_flow_ids[v].iteritems():
+        for hop, flow_ids in ttls_flow_ids[v].items():
             if hop == ttl:
                 vertices_ttl.append(v)
     return vertices_ttl
@@ -77,7 +77,7 @@ def find_vertex_by_ttl_flow_id(g, ttl, flow_id):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     v_ttl_flow_id = []
     for v in g.vertices():
-        for hop, flow_ids in ttls_flow_ids[v].iteritems():
+        for hop, flow_ids in ttls_flow_ids[v].items():
             if hop == ttl and flow_id in flow_ids:
                 v_ttl_flow_id.append(v)
     if len(v_ttl_flow_id) > 0:
@@ -94,7 +94,7 @@ def find_neighbors_ttl(g, v, ttl, ttl2):
     potential_predecessors = find_vertex_by_ttl(g, ttl2)
     predecessors = []
     for pred in potential_predecessors:
-        for hop, flow_ids in ttls_flow_ids[pred].iteritems():
+        for hop, flow_ids in ttls_flow_ids[pred].items():
             if hop == ttl2:
                 l = len(set(flow_ids).intersection(vflow_ids))
                 if l != 0:
@@ -112,7 +112,7 @@ def find_max_ttl(g):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     ttls = set()
     for v in g.vertices():
-        for ttl, flow_id in ttls_flow_ids[v].iteritems():
+        for ttl, flow_id in ttls_flow_ids[v].items():
             ttls.add(ttl)
     return max(ttls)
 
@@ -120,7 +120,7 @@ def find_max_flow_id(g, ttl):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     max_flow_id = -1
     for v in g.vertices():
-        for hop, flow_ids in ttls_flow_ids[v].iteritems():
+        for hop, flow_ids in ttls_flow_ids[v].items():
             if hop == ttl:
                 for flow_id in flow_ids:
                     if flow_id > max_flow_id:
@@ -135,7 +135,7 @@ def find_probes_sent(g, ttl):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     count = 0
     for v in g.vertices():
-        for hop, flow_ids in ttls_flow_ids[v].iteritems():
+        for hop, flow_ids in ttls_flow_ids[v].items():
             if hop == ttl:
                 count = count + len(flow_ids)
     return count
@@ -144,7 +144,7 @@ def find_flows(g, ttl):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     flows_ids_ttl = []
     for v in g.vertices():
-        for hop, flow_ids in ttls_flow_ids[v].iteritems():
+        for hop, flow_ids in ttls_flow_ids[v].items():
             if hop == ttl:
                 flows_ids_ttl.extend(flow_ids)
     return flows_ids_ttl
@@ -164,7 +164,7 @@ def find_missing_flows(g, ttl, ttl2):
 def dump_flows(g):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     for i in range(1, 30):
-        print sorted(find_flows(g, i))
+        print (sorted(find_flows(g, i)))
     return
 
 def tag_edge_flow(g, e, src_ttl, dst_ttl, flow_id, is_new_edge):
@@ -218,7 +218,7 @@ def update_vertex(g, v, ttl, flow_id, alias_result, mpls_infos):
     ip_ids = g.vertex_properties["ip_ids"]
     mpls = g.vertex_properties["mpls"]
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
-    if ttls_flow_ids[v].has_key(ttl):
+    if ttl in ttls_flow_ids[v]:
         ttls_flow_ids[v][ttl].append(flow_id)
     else:
         ttls_flow_ids[v][ttl] = [flow_id]
@@ -247,7 +247,7 @@ def dict_vertices_by_ttl(g):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     dict_vertices_by_ttl = {}
     for v in g.vertices():
-        for ttl, flow_ids in ttls_flow_ids[v].iteritems():
+        for ttl, flow_ids in ttls_flow_ids[v].items():
             if ttl not in dict_vertices_by_ttl:
                 dict_vertices_by_ttl[ttl] = [v]
             else:
@@ -259,7 +259,7 @@ def dict_vertices_by_ttl_without_useless_stars(g):
     # Don't take stars into account except if it is the only interface seen at this hop
     ip_address    = g.vertex_properties["ip_address"]
     vertices_by_ttl = dict_vertices_by_ttl(g)
-    for ttl, vertices in vertices_by_ttl.iteritems():
+    for ttl, vertices in vertices_by_ttl.items():
         wstar_vertices = list(filter(lambda v : not ip_address[v].startswith("*"), vertices))
         if len(wstar_vertices) != 0:
             vertices_by_ttl[ttl] = wstar_vertices
@@ -288,7 +288,11 @@ def find_consecutive_ttls(ttls_vertices):
 
 def extract_load_balancers(g):
     vertices_by_ttl = dict_vertices_by_ttl_without_useless_stars(g)
-    ttls = list(filter(lambda (ttl, vertices): len(vertices) > 1, vertices_by_ttl.iteritems()))
+    ttls = []
+    for ttl, vertices in vertices_by_ttl.items():
+        if len(vertices) > 1:
+            ttls.append((ttl, vertices))
+
     load_balancers = []
     consecutive_ttls = find_consecutive_ttls(ttls)
     for l in consecutive_ttls:
@@ -350,7 +354,7 @@ def apply_converging_heuristic(g, ttl, forward, backward):
     v_predecessor = lv_predecessor[0]
     v_predecessor_flow_ids = ttls_flow_ids[v_predecessor][ttl - 1]
     for v in g.vertices():
-        for hop, flow_ids in ttls_flow_ids[v].iteritems():
+        for hop, flow_ids in ttls_flow_ids[v].items():
             if hop == ttl:
                 if forward:
                     if len(set(flow_ids).intersection(v_successor_flow_ids)) == 0:
@@ -370,8 +374,8 @@ def apply_symmetry_heuristic(g, ttl, max_diff_degree_arg):
     for v in vertices_ttl:
         neighbors_by_vertices[v] = list(v.out_neighbors())
     # If a node has more than strength neigbors in common, infer links
-    for v1, out_neighbors1 in neighbors_by_vertices.iteritems():
-        for v2, out_neighbors2 in neighbors_by_vertices.iteritems():
+    for v1, out_neighbors1 in neighbors_by_vertices.items():
+        for v2, out_neighbors2 in neighbors_by_vertices.items():
             if v1 == v2:
                 continue
             difference = set(out_neighbors1).difference(out_neighbors2)
@@ -414,7 +418,7 @@ def has_discovered_edge(g, ip, ttl, flow_id):
     ttls_flow_ids = g.vertex_properties["ttls_flow_ids"]
     potential_predecessors = find_vertex_by_ttl(g, ttl - 1)
     for p in potential_predecessors:
-        for hop, flow_ids in ttls_flow_ids[p].iteritems():
+        for hop, flow_ids in ttls_flow_ids[p].items():
             if hop == ttl - 1 and flow_id in flow_ids:
                 if v not in p.out_neighbors():
                     return True
@@ -507,7 +511,7 @@ def enrich_flows(g, source_ip, destination, protocol, default_src_port, default_
     edge_flows = g.edge_properties["edge_flows"]
     for e in g.edges():
         flows = edge_flows[e]
-        if flows.has_key("flows"):
+        if "flows" in flows:
             for flow in flows["flows"]:
                 enrich_flow_data(flow, source_ip, destination, protocol, default_src_port, default_dst_port)
 
@@ -554,17 +558,17 @@ def dump_results(g, with_alias_resolution, with_ip_to_as, destination):
 
 def dump_routers_round(round, r_g):
     routers_round = r_g.graph_properties["routers_round_"+ str(round)]
-    print "Routers found for round "+str(round) +": "
+    print ("Routers found for round "+str(round) +": ")
     for router in routers_round[0]:
-        print router
-    print "Probes sent for round " + str(round) + ": " +str(routers_round[1])
-    print "Replies received for round " + str(round) + ": " + str(routers_round[2])
+        print (router)
+    print ("Probes sent for round " + str(round) + ": " +str(routers_round[1]))
+    print ("Replies received for round " + str(round) + ": " + str(routers_round[2]))
 
 def dump_routers(r_g):
     routers = r_g.graph_properties["routers"]
-    print "Routers found : "
+    print ("Routers found : ")
     for router in routers:
-        print router
+        print (router)
 
 
 ############################## REMAPPING OPERATIONS #################################
@@ -573,8 +577,8 @@ def find_common_flow(g, e):
     source = e.source()
     target = e.target()
     # Find the common flow
-    for ttl_source, flow_ids_source in ttls_flow_ids[source].iteritems():
-        for ttl_target, flow_ids_target in ttls_flow_ids[target].iteritems():
+    for ttl_source, flow_ids_source in ttls_flow_ids[source].items():
+        for ttl_target, flow_ids_target in ttls_flow_ids[target].items():
             if ttl_source + 1 == ttl_target:
                 for flow_id_source in flow_ids_source:
                     for flow_id_target in flow_ids_target:

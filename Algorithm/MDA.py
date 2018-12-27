@@ -1,4 +1,4 @@
-from Utils import *
+from Algorithm.Utils import *
 
 
 def probe_until_nk_mda(g, destination, ttl, nprobe_sent, hypothesis, nks):

@@ -66,7 +66,7 @@ def probability_horizontal_transition(K, k):
 
 
 def probability_space(K, nks):
-    probability_space_2_d =[[None] * (nks[x] + 1) for x in xrange(1, K+2)]
+    probability_space_2_d =[[None] * (nks[x] + 1) for x in range(1, K+2)]
 
     probability_space_2_d[1][0] = 0
     probability_space_2_d[1][1] = 1
@@ -130,7 +130,7 @@ def compute_nks(failure_probability, max_hypothesis):
                             break
                         if probability_space_2_d[k][i] <= failure_probability and i > nks[k] and  k  == K - 1:
                             nks[K] = i
-                            print K
+                            print (K)
                             found_nk = True
                             break
             if found_nk:
@@ -171,6 +171,6 @@ if __name__ == "__main__":
             success_proba *= (1 - failure_probas[v.out_degree()])
 
     failure_proba = 1 - success_proba
-    print "Failure probability: " + str(failure_proba)
+    print ("Failure probability: " + str(failure_proba))
 
-    print nks[50][1] + 49
+    print (nks[50][1] + 49)

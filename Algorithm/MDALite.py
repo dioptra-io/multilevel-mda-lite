@@ -1,4 +1,4 @@
-from Utils import *
+from Algorithm.Utils import *
 from Maths.Bounds import *
 from Graph.Probabilities import *
 
@@ -77,7 +77,7 @@ def execute_phase3(g, destination, llb, vertex_confidence,total_budget, limit_li
     #llb : List of load balancer lb
     for lb in llb:
         # nint is the number of already discovered interfaces
-        for ttl, nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+        for ttl, nint in sorted(lb.get_ttl_vertices_number().items()):
             probe_until_nk(g, destination, ttl, find_probes_sent(g, ttl), nint+1, nks)
             # Check if this is a divergent ttl and if we found cross edges
             is_divergent_ttl = is_a_divergent_ttl(g, ttl)
@@ -137,7 +137,7 @@ def execute_phase3(g, destination, llb, vertex_confidence,total_budget, limit_li
     last_loss_fraction = {}
     adaptive_timeout = {}
     for lb in llb:
-        for ttl , nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+        for ttl , nint in sorted(lb.get_ttl_vertices_number().items()):
             adaptive_icmp_rate[ttl] = max_batch_link_probe_size
             last_loss_fraction[ttl] = 1.0
             adaptive_timeout[ttl] = default_meshing_link_timeout
@@ -150,7 +150,7 @@ def execute_phase3(g, destination, llb, vertex_confidence,total_budget, limit_li
         for lb in llb:
 
             # Filter the ttls where there are multiple predecessors
-            for ttl, nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+            for ttl, nint in sorted(lb.get_ttl_vertices_number().items()):
                 # First hop of the diamond does not have to be reconnected
                 if ttl in ttl_finished:
                     continue
@@ -185,7 +185,7 @@ def execute_phase3(g, destination, llb, vertex_confidence,total_budget, limit_li
     # Final reconnection in case we have weird stuff
     for lb in llb:
         # Filter the ttls where there are multiple predecessors
-        for ttl, nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+        for ttl, nint in sorted(lb.get_ttl_vertices_number().items()):
             reconnect_predecessors(g, destination, ttl)
             reconnect_successors(g, destination, ttl)
 
@@ -194,7 +194,7 @@ def execute_phase3(g, destination, llb, vertex_confidence,total_budget, limit_li
         remove_parallel_edges(g)
         for lb in llb:
             # Filter the ttls where there are multiple predecessors
-            for ttl, nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+            for ttl, nint in sorted(lb.get_ttl_vertices_number().items()):
                 apply_symmetry_heuristic(g, ttl, 2)
     remove_parallel_edges(g)
 

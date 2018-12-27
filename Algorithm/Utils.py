@@ -3,7 +3,7 @@
 
 import logging
 import time
-from Constants import *
+from Algorithm.Constants import *
 from Graph.Operations import *
 from scapy.sendrecv import sr
 from Network.Config import default_interface
@@ -39,7 +39,7 @@ def execute_phase1(g, destination, nks):
                 alias_result = [before, reply.time, ip_id_reply, ip_id_probe]                # Update the graph
                 g = update_graph(g, src_ip, ttl_probe, ttl_reply, flow_id, alias_result, mpls_infos)
                 # graph_topology_draw(g)
-                print src_ip
+                print (src_ip)
                 if src_ip != destination:
                     replies_only_from_destination = False
         if replies_only_from_destination:
@@ -265,7 +265,7 @@ def stochastic_and_forward(g, destination, ttl, nks):
 
 def vertices_dict_to_int_dict(d):
     int_dict = {}
-    for key, values in d.iteritems():
+    for key, values in d.items():
         int_values = set(int(v) for v in values)
         int_dict[int(key)] = int_values
 
@@ -273,7 +273,7 @@ def vertices_dict_to_int_dict(d):
 
 def int_dict_to_vertices_dict(d, g):
     vertices_dict = {}
-    for key, values in d.iteritems():
+    for key, values in d.items():
         v_values = set(g.vertex(v) for v in values)
         vertices_dict[g.vertex(key)] = v_values
     return vertices_dict

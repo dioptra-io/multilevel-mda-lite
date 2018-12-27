@@ -159,6 +159,6 @@ if __name__ ==  "__main__":
     for ttl in range(1, 30):
         v_by_ttls = find_vertex_by_ttl(g, ttl)
         ip_addresses_ttl = [ip_address[v] for v in v_by_ttls]
-        print str(ttl) +": "+ str(ip_addresses_ttl)
+        print (str(ttl) +": "+ str(ip_addresses_ttl))
 
     graph_topology_draw(g, with_alias_resolution=False, with_ip2as_resolution=False)

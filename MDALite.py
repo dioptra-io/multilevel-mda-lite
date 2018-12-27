@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import getopt
 import time
-from scapy import config
+from kamene import config
 from Network.Config import set_ip_version
 import copy
 
@@ -12,7 +12,7 @@ import platform
 if platform.system() == "Darwin":
     config.conf.use_pcap = True
     config.conf.use_dnet = True
-    from scapy.all import L3dnetSocket
+    from kamene.all import L3dnetSocket
     config.conf.L3socket = L3dnetSocket
 elif platform.system() == "Linux":
     from scapy.all import L3PacketSocket
@@ -20,7 +20,7 @@ elif platform.system() == "Linux":
 elif platform.system() == "Windows":
     config.conf.use_pcap = True
     config.conf.use_dnet = True
-    from scapy.all import L3dnetSocket
+    from kamene.all import L3dnetSocket
     config.conf.L3socket = L3dnetSocket
 
 # from scapy.all import *
@@ -58,7 +58,7 @@ def resolve_aliases(destination, llb, g):
 
     for lb in llb:
         # Filter the ttls where there are multiple predecessors
-        for ttl, nint in sorted(lb.get_ttl_vertices_number().iteritems()):
+        for ttl, nint in sorted(lb.get_ttl_vertices_number().items()):
             # This commented line uses "common neighbor" heuristic to reduce the number of pairs
             # alias_candidates = find_alias_candidates(g, ttl)
             vertices_by_ttl = find_vertex_by_ttl(g, ttl)
@@ -94,7 +94,7 @@ def reconnect_stars(g):
     ip_address = g.vertex_properties["ip_address"]
     for v in g.vertices():
         if ip_address[v].startswith("*"):
-            for ttl, flow_ids in ttls_flow_ids[v].iteritems():
+            for ttl, flow_ids in ttls_flow_ids[v].items():
                 max_flow_id = max(find_max_flow_id(g, ttl+1), find_max_flow_id(g, ttl-1))
                 for i in range(0, max_flow_id):
                     update_graph(g, ip_address[v], ttl, -1, i, [], None)
@@ -113,20 +113,20 @@ def remap(previous_g, destination):
     for e in previous_g.edges():
         ttl_s, ttl_t, flow_id = find_common_flow(previous_g, e)
         if ttl_s != 0 :
-            if not remapping_probes.has_key(ttl_s):
+            if not ttl_s in remapping_probes:
                 remapping_probes[ttl_s] = [flow_id]
             else:
                 remapping_probes_ttl_s = remapping_probes[ttl_s]
                 if flow_id not in remapping_probes_ttl_s:
                     remapping_probes_ttl_s.append(flow_id)
-        if not remapping_probes.has_key(ttl_t):
+        if not ttl_t in  remapping_probes:
             remapping_probes[ttl_t] = [flow_id]
         else:
             remapping_probes_ttl_t = remapping_probes[ttl_t]
             if flow_id not in remapping_probes_ttl_t:
                 remapping_probes_ttl_t.append(flow_id)
 
-    for ttl, flow_ids in remapping_probes.iteritems():
+    for ttl, flow_ids in remapping_probes.items():
         probes = [build_probe(destination, ttl, flow_id) for flow_id in flow_ids]
         replies, unanswered, before, after = send_probes(probes, timeout = 2 * default_timeout)
         if len(replies) == 0:
@@ -144,7 +144,7 @@ def diff(old_g, g, remapping_probes):
         # Ignore source
         if v == 0:
             continue
-        for ttl, flow_ids in ttls_flow_ids[v].iteritems():
+        for ttl, flow_ids in ttls_flow_ids[v].items():
             flows_mapping_probes = remapping_probes[ttl]
             for flow_id in flow_ids:
                 new_vertices = find_vertex_by_ttl_flow_id(g, ttl, flow_id)
@@ -217,11 +217,11 @@ def main(argv):
                                                                 "algorithm",
                                                                 "ipv6"])
     except getopt.GetoptError:
-        print usage
+        print (usage)
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-h', "--help"):
-            print usage
+            print (usage)
 
             sys.exit(2)
         elif opt in ("-o", "--ofile"):
@@ -238,7 +238,7 @@ def main(argv):
             if check_if_option("-S", "--source", opts):
                 save_flows_infos = True
             else:
-                print "Please provide a source if you want to save flows edges"
+                print ("Please provide a source if you want to save flows edges")
                 exit(2)
         elif opt in ("-S", "--source"):
             source_name = arg
@@ -260,7 +260,7 @@ def main(argv):
             set_ip_version("IPv6")
 
     if len(args) != 1:
-        print usage
+        print (usage)
         sys.exit(2)
     destination  = args[0]
     logging.basicConfig(filename="MDA_log.log", level=getattr(logging, log_level.upper()), filemode="w")
@@ -318,14 +318,14 @@ def main(argv):
             llb = extract_load_balancers(g)
             before_alias = time.time()
             int_aliases_just_ip_traceroute, int_aliases_per_round = resolve_aliases(destination, llb, g)
-            print "Duration of alias resolution : " + str(time.time() - before_alias) + " seconds"
+            print ("Duration of alias resolution : " + str(time.time() - before_alias) + " seconds")
             #r_g = router_graph(aliases, r_g)
             aliases_just_ip_traceroute = int_dict_to_vertices_dict(int_aliases_just_ip_traceroute[0], g)
             router_probes_sent = get_total_probe_sent() - ip_probes_sent
             router_useful_probes = get_total_replies() - ip_useful_probes
             save_routers_round(-1, aliases_just_ip_traceroute, int_aliases_just_ip_traceroute[1], int_aliases_just_ip_traceroute[2], g)
             # dump_routers_round(-1, g)
-            for round, (int_aliases, probes_sent, replies_received) in int_aliases_per_round.iteritems():
+            for round, (int_aliases, probes_sent, replies_received) in int_aliases_per_round.items():
                 aliases = int_dict_to_vertices_dict(int_aliases, g)
                 save_routers_round(round, aliases, probes_sent, replies_received, g)
                 # dump_routers_round(round, g)
@@ -370,14 +370,14 @@ def main(argv):
 
 
 
-    print "Duration of measurement : " + str(end_time) + " seconds"
-    print "Found a graph with " + str(len(g.get_vertices())) + " vertices and " + str(len(g.get_edges())) + " edges"
-    print "Total probes sent for ip traceroute: " + str(ip_probes_sent)
-    print "Total replies received for ip traceroute: " + str(ip_useful_probes)
-    print "Total probes sent for alias resolution: " + str(router_probes_sent)
-    print "Total replies received for alias resolution: " + str(router_useful_probes)
-    print "Percentage of edges inferred : " + str(get_percentage_of_inferred(g)) + "%"
-    print "Phase 3 finished"
+    print ("Duration of measurement : " + str(end_time) + " seconds")
+    print ("Found a graph with " + str(len(g.get_vertices())) + " vertices and " + str(len(g.get_edges())) + " edges")
+    print ("Total probes sent for ip traceroute: " + str(ip_probes_sent))
+    print ("Total replies received for ip traceroute: " + str(ip_useful_probes))
+    print ("Total probes sent for alias resolution: " + str(router_probes_sent))
+    print ("Total replies received for alias resolution: " + str(router_useful_probes))
+    print ("Percentage of edges inferred : " + str(get_percentage_of_inferred(g)) + "%")
+    print ("Phase 3 finished")
 
 
     if save_flows_infos:

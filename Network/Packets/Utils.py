@@ -1,9 +1,9 @@
 from scapy.contrib.icmp_extensions import ICMPExtensionMPLS
 from scapy.packet import NoPayload
-from scapy.layers.inet import IP, ICMP, UDP, Raw, IPerror, UDPerror
+from scapy.layers.inet import IP, ICMP, UDP, IPerror, UDPerror
 from Maths.Bounds import get_nks
 
-from Network.Config import default_ip_address, default_ip_address_6, get_ip_version
+from Network.Config import default_ip_address_4, default_ip_address_6, get_ip_version
 
 from scapy.layers.inet6 import IPv6, ICMPv6TimeExceeded, ICMPv6DestUnreach, IPerror6
 # Hardcoded sport
@@ -16,7 +16,7 @@ dport  = 33435
 nk95, nk99 = get_nks()
 
 def build_icmp_echo_request_probe(destination):
-    return IP(src=default_ip_address, dst=destination)/ICMP()
+    return IP(src=default_ip_address_4, dst=destination) / ICMP()
 
 
 def build_ipv6_probe(destination, ttl, flow_id):
@@ -50,7 +50,7 @@ def build_ip_probe(destination, ttl):
 def build_transport_probe(flow_id):
     return UDP(dport = dport, sport = sport + flow_id)
 def build_raw_probe(data):
-    return Raw(load = data)
+    return data
 
 def build_alias_probe(destination):
     return IP(dst = destination)/ICMP()
@@ -68,6 +68,9 @@ def get_phase_1_probe(destination, ttl, nks, black_flows):
     for j in white_flows:
         probes.append(build_probe(destination, ttl, j))
     return probes
+
+def extract_send_time(p):
+    return p.sent_time
 
 def extract_time(p):
     return p[IP].time

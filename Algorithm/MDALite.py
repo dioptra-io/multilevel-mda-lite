@@ -32,9 +32,9 @@ def reconnect_impl(g, destination, ttl, ttl2):
                 break
         if flow_id is not None:
             check_neighbors_probes.append(build_probe(destination, ttl2, flow_id))
-    replies, unanswered, before = send_probes(check_neighbors_probes, default_timeout)
-    update_unanswered(unanswered, ttl, False)
-    update_graph_from_replies(g, replies, before)
+    replies, unanswered = send_probes(check_neighbors_probes, default_timeout)
+    update_unanswered(unanswered, ttl, False,g)
+    update_graph_from_replies(g, replies)
 
 # These functions reconnect a flow_number number of flows (serves for checking cross edges)
 def reconnect_flows_ttl_predecessor(g, destination, ttl, flow_number):
@@ -55,9 +55,9 @@ def reconnect_flows_ttl_impl(g, destination, ttl, ttl2, flow_number):
                 if predecessors is None:
                     if flow_id not in black_flows[ttl2]:
                         check_neighbors_probes.append(build_probe(destination, ttl2, flow_id))
-    replies, unanswered, before = send_probes(check_neighbors_probes, default_timeout)
-    update_unanswered(unanswered, ttl, False)
-    update_graph_from_replies(g, replies, before)
+    replies, unanswered = send_probes(check_neighbors_probes, default_timeout)
+    update_unanswered(unanswered, ttl, False, g)
+    update_graph_from_replies(g, replies)
 
 def probe_asymmetry_ttl(g, destination, lb, ttl, nprobe_sent, max_probe_needed, nks):
     while nprobe_sent < max_probe_needed:
@@ -65,9 +65,9 @@ def probe_asymmetry_ttl(g, destination, lb, ttl, nprobe_sent, max_probe_needed, 
         nprobes = max_probe_needed - nprobe_sent
         # Generate the nprobes
         probes = generate_probes(nprobes, destination, ttl, next_flow_id)
-        replies, unanswered, before = send_probes(probes, default_timeout)
-        update_unanswered(unanswered, ttl, False)
-        update_graph_from_replies(g, replies, before)
+        replies, unanswered = send_probes(probes, default_timeout)
+        update_unanswered(unanswered, ttl, False, g)
+        update_graph_from_replies(g, replies)
         nprobe_sent = nprobe_sent + nprobes
         reconnect_predecessors(g, destination, ttl)
         max_probe_needed = max_probes_needed_ttl(g, lb, ttl, nks)

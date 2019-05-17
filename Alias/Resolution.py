@@ -5,7 +5,7 @@ import functools
 from Alias.Mpls import *
 from Graph.Operations import *
 from Network.Packets.Utils import *
-from Algorithm.Utils import send_probes, cmp_to_key
+from Algorithm.Utils import send_probes
 from Algorithm.Utils import get_total_probe_sent, get_total_replies, vertices_dict_to_int_dict, int_dict_to_vertices_dict
 
 midar_unusable_treshold = 0.75
@@ -59,7 +59,7 @@ def send_fingerprinting_probes(g):
             probe = build_icmp_echo_request_probe(dst_ip)
             fingerprinting_probes.append(probe)
 
-    replies, unanswered, before = send_probes(fingerprinting_probes, timeout=default_fingerprinting_timeout, verbose=False)
+    replies, unanswered = send_probes(fingerprinting_probes, timeout=default_fingerprinting_timeout, verbose=False)
     # replies, unanswered = sr(fingerprinting_probes, timeout=default_fingerprinting_timeout, verbose=False)
     return replies, unanswered
 
@@ -156,21 +156,24 @@ def send_parallel_alias_probes(g, l_l_vertices, ttl, destination):
                     flow_id = ttls_flow_ids[v][ttl][0]
                     alias_udp_probe = build_probe(destination, ttl, flow_id)
                     alias_probes.append(alias_udp_probe)
-            replies, unanswered, before = send_probes(alias_probes, timeout=default_elimination_alias_timeout, verbose = False)
+            replies, unanswered = send_probes(alias_probes, timeout=default_elimination_alias_timeout, verbose = False)
             if len(replies) == 0:
+                # for probe in unanswered:
+                #     g.graph_properties["raw_probes_replies"].append([probe, "*"])
                 continue
             for probe, reply in replies:
+                # g.graph_properties["raw_probes_replies"].append([probe, reply])
                 reply_ip, flow_id, ttl_reply, ip_id_reply, mpls_infos = extract_icmp_reply_infos(reply)
                 ttl_probe, ip_id_probe = extract_probe_infos(probe)
-                alias_result = [before, reply.time, ip_id_reply, ip_id_probe]
+                alias_result = [probe.sent_time, reply.time, ip_id_reply, ip_id_probe]
 
                 #logging.debug("Flow changed during measurement! Or it is may be not a per-flow load-balancer...")
                 update_graph(g, reply_ip, ttl_probe, ttl_reply, flow_id, alias_result, mpls_infos)
                 other_v = find_vertex_by_ip(g, reply_ip)
                 if not other_v in time_series_by_vertices:
-                    time_series_by_vertices[other_v] = [[before, reply.time, ip_id_reply, ip_id_probe]]
+                    time_series_by_vertices[other_v] = [[probe.sent_time, reply.time, ip_id_reply, ip_id_probe]]
                 else:
-                    time_series_by_vertices[other_v].append([before, reply.time, ip_id_reply, ip_id_probe])
+                    time_series_by_vertices[other_v].append([probe.sent_time, reply.time, ip_id_reply, ip_id_probe])
         if i %10 == 0:
             logging.debug(str(i+1) + " round took " + (str(time.time() - one_round_time_before)) + " seconds, "\
                   + str(default_alias_icmp_probe_number - (i+1)) + " rounds remaining")

@@ -10,11 +10,21 @@ from Network.Config import *
 max_ttl = 30
 
 def init_graph(destination):
+    global ip_version
     g = Graph()
+
+    source_prop = g.new_graph_property("string")
+    if ip_version == "IPv4":
+        source_prop[g] = default_ip_address_4
+    elif ip_version == "IPv6":
+        source_prop[g] = default_ip_address_6
 
     destination_prop = g.new_graph_property("string")
     destination_prop[g] = destination
     g.graph_properties["destination"] = destination_prop
+    g.graph_properties["source"] = source_prop
+
+
     ip_address = g.new_vertex_property("string")
     ttls_flow_ids = g.new_vertex_property("python::object")
 
@@ -30,6 +40,11 @@ def init_graph(destination):
     # RFC 4950, we can have MPLS Infos for free (when MPLS tunnel is visible).
     mpls  = g.new_vertex_property("python::object")
 
+    # Raw probes for RIPE Json output
+    raw_probes_replies = g.new_graph_property("python::object")
+
+    raw_probes_replies[g] = []
+    g.graph_properties["raw_probes_replies"] = raw_probes_replies
 
     g.vertex_properties["ip_address"] = ip_address
     g.vertex_properties["ttls_flow_ids"] = ttls_flow_ids
@@ -41,7 +56,7 @@ def init_graph(destination):
     source = g.add_vertex()
     ip_version = get_ip_version()
     if ip_version == "IPv4":
-        ip_address[source] = default_ip_address
+        ip_address[source] = default_ip_address_4
     elif ip_version == "IPv6":
         ip_address[source] = default_ip_address_6
     ttls_flow_ids[source] = {}

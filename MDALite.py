@@ -1,27 +1,25 @@
 #!/usr/bin/env python
 import getopt
-import time
-from kamene import config
-from Network.Config import set_ip_version
-import copy
-
-config.Conf.load_layers.remove("x509")
 
 ###### PLATFORM RELATED SOCKETS########
 import platform
 if platform.system() == "Darwin":
+    from kamene import config
     config.conf.use_pcap = True
     config.conf.use_dnet = True
     from kamene.all import L3dnetSocket
     config.conf.L3socket = L3dnetSocket
 elif platform.system() == "Linux":
+    from scapy import config
     from scapy.all import L3PacketSocket
     config.conf.L3socket = L3PacketSocket
 elif platform.system() == "Windows":
+    from kamene import config
     config.conf.use_pcap = True
     config.conf.use_dnet = True
     from kamene.all import L3dnetSocket
     config.conf.L3socket = L3dnetSocket
+config.Conf.load_layers.remove("x509")
 
 # from scapy.all import *
 # from Maths.Bounds import *
@@ -34,7 +32,7 @@ from Alias.Resolution import *
 from IP2AS.ip2as import *
 from Algorithm.MDALite import *
 from Algorithm.MDA import *
-
+from Output.Ripe import dump_ripe_output
 
 def resolve_aliases(destination, llb, g):
 
@@ -128,10 +126,10 @@ def remap(previous_g, destination):
 
     for ttl, flow_ids in remapping_probes.items():
         probes = [build_probe(destination, ttl, flow_id) for flow_id in flow_ids]
-        replies, unanswered, before, after = send_probes(probes, timeout = 2 * default_timeout)
+        replies, unanswered = send_probes(probes, timeout = 2 * default_timeout)
         if len(replies) == 0:
             update_unanswered(unanswered, ttl, True, g)
-        update_graph_from_replies(g, replies, before)
+        update_graph_from_replies(g, replies)
     return g, remapping_probes
 
 def diff(old_g, g, remapping_probes):
@@ -219,7 +217,9 @@ def main(argv):
     except getopt.GetoptError:
         print (usage)
         sys.exit(2)
+
     for opt, arg in opts:
+
         if opt in ('-h', "--help"):
             print (usage)
 
@@ -340,7 +340,7 @@ def main(argv):
             ripe_ip2as(g)
             # bgp_stream_ip_to_as(g, origin)
 
-    end_time = time.time() - origin
+    end_time = time.time()
 
     # Save some globals in the graphs (probes sent).
 
@@ -370,7 +370,7 @@ def main(argv):
 
 
 
-    print ("Duration of measurement : " + str(end_time) + " seconds")
+    print ("Duration of measurement : " + str(end_time - origin) + " seconds")
     print ("Found a graph with " + str(len(g.get_vertices())) + " vertices and " + str(len(g.get_edges())) + " edges")
     print ("Total probes sent for ip traceroute: " + str(ip_probes_sent))
     print ("Total replies received for ip traceroute: " + str(ip_useful_probes))
@@ -394,6 +394,11 @@ def main(argv):
         g.save(output_file)
     # Dump txt results in any case
     dump_results(g, with_alias_resolution, with_ip2as, destination)
+
+    ######### RIPE output ###########
+
+    dump_ripe_output(g, ip_version, algorithm)
+
 
 if __name__ == "__main__":
 

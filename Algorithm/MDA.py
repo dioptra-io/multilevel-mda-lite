@@ -7,15 +7,15 @@ def probe_until_nk_mda(g, destination, ttl, nprobe_sent, hypothesis, nks):
         nprobes = nks[hypothesis] - nprobe_sent
         # Generate the nprobes, don't use the black flows found at ttl - 1
         probes = generate_probes(nprobes, destination, ttl, next_flow_id)
-        replies, unanswered, before = send_probes(probes, default_timeout)
+        replies, unanswered = send_probes(probes, default_timeout)
         if len(replies) == 0 and nprobe_sent == 0:
             update_unanswered(unanswered, ttl, True, g)
         else:
-            update_unanswered(unanswered, ttl, False)
+            update_unanswered(unanswered, ttl, False,g)
         for probe, reply in replies:
             src_ip, flow_id, ttl_reply, ip_id_reply, mpls_infos = extract_icmp_reply_infos(reply)
             ttl_probe, ip_id_probe = extract_probe_infos(probe)
-            alias_result = [before, reply.time, ip_id_reply, ip_id_probe]
+            alias_result = [probe.sent_time, reply.time, ip_id_reply, ip_id_probe]
             if is_new_ip(g, src_ip):
                 hypothesis = hypothesis + 1
             # Update the graph

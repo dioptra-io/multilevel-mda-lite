@@ -45,7 +45,7 @@ def json_result_by_ttl(g, ip_version):
 
     return result
 
-def dump_ripe_output(g, ip_version, algorithm):
+def dump_ripe_output(g, ip_version, algorithm, ofile):
     '''
     This outputs the traceroute in the RIPE format given in https://atlas.ripe.net/docs/data_struct/#v4750_traceroute
     enriched with the flow id.
@@ -82,9 +82,8 @@ def dump_ripe_output(g, ip_version, algorithm):
         "type": algorithm
     }
 
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(output)
-
+    with open(ofile, "w") as f:
+        json.dump(output, f, indent=2)
 
 
 if __name__ == "__main__":
@@ -114,4 +113,4 @@ if __name__ == "__main__":
     config.Conf.load_layers.remove("x509")
     from graph_tool.all import *
     g = load_graph("test.xml")
-    dump_ripe_output(g, "IPv4", "mda-lite")
+    dump_ripe_output(g, "IPv4", "mda-lite", "test.json")

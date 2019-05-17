@@ -186,7 +186,7 @@ def main(argv):
     algorithm = "mda-lite"
     usage = 'Usage : 3-phase-mda.py <options> <destination>\n' \
                 'options : \n' \
-                '-o --ofile <outputfile> (*.xml, default: draw_graph) \n' \
+                '-o --ofile <outputfile> (*.json (RIPE format), *.xml, default: draw_graph) \n' \
                 '-i --ifile <inputfile> (graph_tool supported format: see https://graph-tool.skewed.de/static/doc/quickstart.html I/O section) \n' \
                 '-c --vertex-confidence <vertex-confidence> (95, 99) Give the failure probability to use in the discovered topology\n' \
                 '-b --edge-budget <edge-budget> (default:5000) Budget used to discover the links when there is meshing in the topology\n' \
@@ -390,14 +390,16 @@ def main(argv):
         graph_topology_draw(g, with_alias_resolution, with_ip2as)
         # if with_alias_resolution:
         #     graph_router_topology_level_draw(r_g)
-    elif output_file != "":
+    elif output_file.endswith("xml"):
         g.save(output_file)
+    elif output_file.endswith("json"):
+        dump_ripe_output(g, ip_version, algorithm, output_file)
     # Dump txt results in any case
     dump_results(g, with_alias_resolution, with_ip2as, destination)
 
     ######### RIPE output ###########
 
-    dump_ripe_output(g, ip_version, algorithm)
+
 
 
 if __name__ == "__main__":

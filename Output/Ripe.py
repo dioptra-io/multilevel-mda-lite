@@ -4,9 +4,12 @@ from Graph.Operations import *
 from Network.Packets.Utils import *
 
 
-def extract_probe_size(g):
+def extract_probe_size(g, ip_version):
     raw_probes_replies = g.graph_properties["raw_probes_replies"]
-    return raw_probes_replies[0][0][1][IP].len
+    if ip_version == "4":
+        return raw_probes_replies[0][0][1][IP].len
+    elif ip_version == "6":
+        return raw_probes_replies[0][0][1][IPv6].len
 
 def json_result_by_ttl(g, ip_version):
     raw_probes_replies = g.graph_properties["raw_probes_replies"]
@@ -84,7 +87,7 @@ def dump_ripe_output(g, ip_version, algorithm, ofile):
         # To be changed when other protocols will be available
         "proto"   : "UDP",
         "result"  : json_result_by_ttl(g, af),
-        "size": extract_probe_size(g),
+        "size": extract_probe_size(g, af),
         "src_addr": source,
         "timestamp": g.graph_properties["starting_time"],
         "type": algorithm

@@ -393,13 +393,9 @@ def main(argv):
     elif output_file.endswith("xml"):
         g.save(output_file)
     elif output_file.endswith("json"):
-        dump_ripe_output(g, ip_version, algorithm, output_file)
+        dump_ripe_output(g, get_ip_version(), algorithm, output_file)
     # Dump txt results in any case
     dump_results(g, with_alias_resolution, with_ip2as, destination)
-
-    ######### RIPE output ###########
-
-
 
 
 if __name__ == "__main__":

@@ -14,9 +14,9 @@ def init_graph(destination):
     g = Graph()
 
     source_prop = g.new_graph_property("string")
-    if ip_version == "IPv4":
+    if get_ip_version() == "IPv4":
         source_prop[g] = default_ip_address_4
-    elif ip_version == "IPv6":
+    elif get_ip_version() == "IPv6":
         source_prop[g] = default_ip_address_6
 
     destination_prop = g.new_graph_property("string")

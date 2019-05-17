@@ -173,6 +173,8 @@ def node_control_ttl(g, ttl, nks):
     if len(vertices_ttl) == 1 and ip_address[vertices_ttl[0]].startswith("*"):
         return 0
     for v in vertices_ttl:
+        if ip_address[v].startswith("*"):
+            continue
         missing_flows_v = node_control_v(g, v, ttl, nks)
         flow_dist[v] = missing_flows_v
         if  missing_flows_v > 0:

@@ -34,15 +34,23 @@ def json_result_by_ttl(g, ip_version):
                 ttl_reply   = extract_ttl(reply)
                 flow_id = extract_flow_id_reply(reply)
 
-                result[ttl-1]["result"].append(
-                    {
-                        "from" : src_addr,
-                        "rtt"  : rtt,
-                        "size" : size_reply,
-                        "ttl"  : ttl_reply,
-                        "flow_id": flow_id
-                    })
-
+        elif ip_version == "6":
+            ttl = extract_ttl6(probe)
+            if reply == "*":
+                result[ttl - 1]["result"].append({"x":"*"})
+            else:
+                src_addr = extract_src_ip(reply, IPv6)
+                size_reply  = reply[IPv6].plen
+                ttl_reply   = extract_ttl6(reply)
+                flow_id = extract_flow_id_reply6(reply)
+        result[ttl - 1]["result"].append(
+            {
+                "from": src_addr,
+                "rtt": rtt,
+                "size": size_reply,
+                "ttl": ttl_reply,
+                "flow_id": flow_id
+            })
     return result
 
 def dump_ripe_output(g, ip_version, algorithm, ofile):

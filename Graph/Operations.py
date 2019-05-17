@@ -459,6 +459,8 @@ def mda_continue_probing_ttl(g, hop, nks):
     if len(vertices_successors) == 0 :
         return True
     for v in vertices_ttl:
+        if g.vertex_properties["ip_address"][v].startswith("*"):
+            continue
         if mda_continue_probing_v(g, hop, v, nks):
             return True
     logging.info("TTL " + str(hop) + " finished. MDA Statistical guarantees reached.")

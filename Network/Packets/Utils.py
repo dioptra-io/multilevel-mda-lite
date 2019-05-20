@@ -87,6 +87,9 @@ def extract_flow_id_reply6(reply):
 def extract_flow_id_probe(probe):
     return probe[UDP].sport - sport
 
+def extract_flow_id_probe6(probe):
+    return probe[IPv6].fl
+
 def extract_ttl(p):
     return p[IP].ttl
 

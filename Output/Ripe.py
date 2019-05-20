@@ -29,18 +29,23 @@ def json_result_by_ttl(g, ip_version):
             rtt = (receive_time - send_time) * 1000
         if ip_version == "4":
             ttl = extract_ttl(probe)
+            flow_id = extract_flow_id_probe(probe)
             if reply == "*":
-                result[ttl - 1]["result"].append({"x":"*"})
+                result[ttl - 1]["result"].append({"x":"*",
+                                                  "flow_id": flow_id
+                                                  })
             else:
                 src_addr = extract_src_ip(reply, IP)
                 size_reply  = reply[IP].len
                 ttl_reply   = extract_ttl(reply)
-                flow_id = extract_flow_id_reply(reply)
 
         elif ip_version == "6":
             ttl = extract_ttl6(probe)
+            flow_id = extract_flow_id_probe6(probe)
             if reply == "*":
-                result[ttl - 1]["result"].append({"x":"*"})
+                result[ttl - 1]["result"].append({"x":"*",
+                                                  "flow_id": flow_id
+                                                  })
             else:
                 src_addr = extract_src_ip(reply, IPv6)
                 size_reply  = reply[IPv6].plen
@@ -79,11 +84,11 @@ def dump_ripe_output(g, ip_version, algorithm, ofile):
         "dst_name": destination,
         "endtime" : g.graph_properties["end_time"],
         "from"    : ip_address[g.vertex(0)],
-        "fw"      : "unknown",
-        "lts"     : "unknown",
-        "msm_id"  : "unknown",
+        "fw"      : 4790,
+        "lts"     : -1,
+        "msm_id"  : -1,
         "msm_name": algorithm,
-        "paris_id": "Look in the probes",
+        "paris_id": 0,
         # To be changed when other protocols will be available
         "proto"   : "UDP",
         "result"  : json_result_by_ttl(g, af),

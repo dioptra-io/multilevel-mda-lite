@@ -34,6 +34,7 @@ def json_result_by_ttl(g, ip_version):
                 result[ttl - 1]["result"].append({"x":"*",
                                                   "flow_id": flow_id
                                                   })
+                continue
             else:
                 src_addr = extract_src_ip(reply, IP)
                 size_reply  = reply[IP].len
@@ -46,6 +47,7 @@ def json_result_by_ttl(g, ip_version):
                 result[ttl - 1]["result"].append({"x":"*",
                                                   "flow_id": flow_id
                                                   })
+                continue
             else:
                 src_addr = extract_src_ip(reply, IPv6)
                 size_reply  = reply[IPv6].plen
